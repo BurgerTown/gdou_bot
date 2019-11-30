@@ -51,7 +51,7 @@ def jw(update, context):
         links.append(t[0].split('"')[1])
     text = ['广东海洋大学教务系统: ']
     for t in range(len(texts)):
-        text.append(f'[{links[t]}]({texts[t]})')
+        text.append(f'[{texts[t]}]({links[t]})')
     context.bot.send_message(chat_id=update.effective_chat.id, text='\n'.join(
         text), parse_mode=telegram.ParseMode.MARKDOWN)
 
