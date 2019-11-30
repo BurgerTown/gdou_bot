@@ -41,8 +41,19 @@ def start(update, context):
 
 def jw(update, context):
     screen_log(update.message, 'jw')
-    text = '广东海洋大学教务系统: \nhttp://www.gdou.edu.cn/jw/zf.html'
-    context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+    text = requests.get('http://www.gdou.edu.cn/jw/zf.html').text
+    text = text.split('<div class="div">')[1].split('</A>')[:-1]
+    links = []
+    texts = []
+    for t in text:
+        t = t.split(' target="_blank">')
+        texts.append(t[-1])
+        links.append(t[0].split('"')[1])
+    text = ['广东海洋大学教务系统: ']
+    for t in range(len(texts)):
+        text.append(f'[{links[t]}]({texts[t]})')
+    context.bot.send_message(chat_id=update.effective_chat.id, text='\n'.join(
+        text), parse_mode=telegram.ParseMode.MARKDOWN)
 
 
 def yjpj(update, context):
