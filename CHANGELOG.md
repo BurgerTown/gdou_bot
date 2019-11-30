@@ -1,5 +1,12 @@
 # Changelog
 
+## 2019/11/30 17:12
+
+Added: 
+
+- Typing
+- Welcome New Member
+
 ## v0.1.1 (2019/11/30 15:00)
 
 Modified:

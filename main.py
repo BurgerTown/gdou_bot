@@ -40,6 +40,7 @@ def start(update, context):
 
 
 def jw(update, context):
+    context.bot.send_chat_action(chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
     screen_log(update.message, 'jw')
     text = requests.get('http://www.gdou.edu.cn/jw/zf.html').text
     text = text.split('<div class="div">')[1].split('</A>')[:-1]
@@ -63,6 +64,7 @@ def yjpj(update, context):
 
 
 def make_sticker(update, context):
+    context.bot.send_chat_action(chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
     if str(update.message.chat_id) != TEST_ID:
         context.bot.send_message(
             chat_id=update.effective_chat.id, text='权限不足')
@@ -99,6 +101,7 @@ def make_sticker(update, context):
 
 
 def weather_now(update, context):
+    context.bot.send_chat_action(chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
     screen_log(update.message, 'weather_now')
     weather_type = 'now'
     link = f'https://free-api.heweather.net/s6/weather/{weather_type}'
@@ -127,6 +130,7 @@ def draw_subplot(type, times, data, today):
 
 
 def daily_forecast(context: telegram.ext.CallbackContext):
+    context.bot.send_chat_action(chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
     weather_type = 'forecast'
     link = f'https://free-api.heweather.net/s6/weather/{weather_type}'
     payload = {'location': location_code, 'key': HEWEATHER_KEY}
@@ -171,6 +175,12 @@ def daily_forecast(context: telegram.ext.CallbackContext):
     print(f'{datetime.date.today()} forecast pushed')
 
 
+def welcome_new_member(update, context):
+    for member in update.message.new_chat_members:
+        update.message.reply_text(
+            "欢迎 {username}".format(username=member.username))
+
+
 def test():
     text = '111'
     telegram.Bot(BOT_TOKEN).send_message(chat_id=TEST_ID, ext=text)
@@ -182,5 +192,7 @@ dispatcher.add_handler(CommandHandler('jw', jw))
 dispatcher.add_handler(CommandHandler('yjpj', yjpj))
 dispatcher.add_handler(CommandHandler('weather_now', weather_now))
 dispatcher.add_handler(MessageHandler(Filters.document.image, make_sticker))
+dispatcher.add_handler(MessageHandler(
+    Filters.status_update.new_chat_members, welcome_new_member))
 # test()
 updater.start_polling()
