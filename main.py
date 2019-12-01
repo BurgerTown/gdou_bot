@@ -14,6 +14,7 @@ from telegram.ext.filters import Filters
 from config import BOT_TOKEN, TEST_ID, HEWEATHER_KEY, MZQ_CODE
 
 location_code = MZQ_CODE
+GDOU_Group = '@GDOU_Water'
 
 updater = Updater(token=BOT_TOKEN, use_context=True)
 dispatcher = updater.dispatcher
@@ -40,7 +41,8 @@ def start(update, context):
 
 
 def jw(update, context):
-    context.bot.send_chat_action(chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
+    context.bot.send_chat_action(
+        chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
     screen_log(update.message, 'jw')
     text = requests.get('http://www.gdou.edu.cn/jw/zf.html').text
     text = text.split('<div class="div">')[1].split('</A>')[:-1]
@@ -64,7 +66,8 @@ def yjpj(update, context):
 
 
 def make_sticker(update, context):
-    context.bot.send_chat_action(chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
+    context.bot.send_chat_action(
+        chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
     if str(update.message.chat_id) != TEST_ID:
         context.bot.send_message(
             chat_id=update.effective_chat.id, text='权限不足')
@@ -101,7 +104,8 @@ def make_sticker(update, context):
 
 
 def weather_now(update, context):
-    context.bot.send_chat_action(chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
+    context.bot.send_chat_action(
+        chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
     screen_log(update.message, 'weather_now')
     weather_type = 'now'
     link = f'https://free-api.heweather.net/s6/weather/{weather_type}'
@@ -130,7 +134,8 @@ def draw_subplot(type, times, data, today):
 
 
 def daily_forecast(context: telegram.ext.CallbackContext):
-    context.bot.send_chat_action(chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
+    context.bot.send_chat_action(
+        chat_id=GDOU_Group, action=telegram.ChatAction.TYPING)
     weather_type = 'forecast'
     link = f'https://free-api.heweather.net/s6/weather/{weather_type}'
     payload = {'location': location_code, 'key': HEWEATHER_KEY}
@@ -144,7 +149,7 @@ def daily_forecast(context: telegram.ext.CallbackContext):
         **t)
     # context.bot.send_message(chat_id=TEST_ID,
     #                          text=text, parse_mode=telegram.ParseMode.MARKDOWN)
-    context.bot.send_message(chat_id='@GDOU_Water',
+    context.bot.send_message(chat_id=GDOU_Group,
                              text=text, parse_mode=telegram.ParseMode.MARKDOWN)
     weather_type = 'hourly'
     link = f'https://free-api.heweather.net/s6/weather/{weather_type}'
@@ -168,7 +173,7 @@ def daily_forecast(context: telegram.ext.CallbackContext):
     plt.setp(ax1.get_xticklabels(), visible=False)
     plt.savefig(f'{today}.png')
 
-    context.bot.send_photo(chat_id='@GDOU_Water',
+    context.bot.send_photo(chat_id=GDOU_Group,
                            photo=open(f'{today}.png', 'rb'))
     # context.bot.send_photo(chat_id=TEST_ID,
     #                        photo=open(f'{today}.png', 'rb'))
@@ -181,9 +186,26 @@ def welcome_new_member(update, context):
             "欢迎 {username}".format(username=member.username))
 
 
+def get_sticker_id(update, context):
+    context.bot.send_chat_action(
+        chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
+    if str(update.message.chat_id) != TEST_ID:
+        context.bot.send_message(
+            chat_id=update.effective_chat.id, text='权限不足')
+    else:
+        context.bot.send_message(
+            chat_id=update.effective_chat.id, text=update.message.sticker.file_id)
+
+
+def tql(update, context):
+    context.bot.send_sticker(
+        chat_id=update.effective_chat.id, sticker='CAADBQADBQAD6EXBEZeMDoztApb_FgQ')
+
+
 def test():
     text = '111'
-    telegram.Bot(BOT_TOKEN).send_message(chat_id=TEST_ID, ext=text)
+    telegram.Bot(BOT_TOKEN).send_sticker(chat_id=TEST_ID,
+                                         sticker='CAADBQADBQAD6EXBEZeMDoztApb_FgQ')
 
 
 job.run_daily(daily_forecast, time=datetime.time(0, 0, 0))
@@ -191,8 +213,10 @@ dispatcher.add_handler(CommandHandler('start', start))
 dispatcher.add_handler(CommandHandler('jw', jw))
 dispatcher.add_handler(CommandHandler('yjpj', yjpj))
 dispatcher.add_handler(CommandHandler('weather_now', weather_now))
+dispatcher.add_handler(CommandHandler('tql', tql))
 dispatcher.add_handler(MessageHandler(Filters.document.image, make_sticker))
 dispatcher.add_handler(MessageHandler(
     Filters.status_update.new_chat_members, welcome_new_member))
+dispatcher.add_handler(MessageHandler(Filters.sticker, get_sticker_id))
 # test()
 updater.start_polling()

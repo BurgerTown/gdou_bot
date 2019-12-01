@@ -1,8 +1,15 @@
 # Changelog
 
+## 2019/12/1 11:20
+
+Added:
+
+- Get sticker ID
+- `/tql` -- Send sticker `tql` in `GDOU_Water` sticker set
+
 ## 2019/11/30 17:12
 
-Added: 
+Added:
 
 - Typing
 - Welcome New Member
