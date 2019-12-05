@@ -3,6 +3,7 @@ import logging
 import datetime
 import requests
 import telegram
+import platform
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
@@ -11,12 +12,18 @@ from pylab import mpl
 from telegram.ext import Updater
 from telegram.ext import CommandHandler, MessageHandler
 from telegram.ext.filters import Filters
-from config import BOT_TOKEN, TEST_ID, HEWEATHER_KEY, MZQ_CODE
+from config import DEV_TOKEN, PUB_TOKEN, TEST_ID, HEWEATHER_KEY, MZQ_CODE
 
 location_code = MZQ_CODE
 GDOU_Group = '@GDOU_Water'
 
-updater = Updater(token=BOT_TOKEN, use_context=True)
+if platform.node() == 'localhost.localdomain':
+    ENV = 'PUB'
+    updater = Updater(token=PUB_TOKEN, use_context=True)  # PUB
+else:
+    ENV = 'DEV'
+    updater = Updater(token=DEV_TOKEN, use_context=True)  # DEV
+
 dispatcher = updater.dispatcher
 job = updater.job_queue
 
@@ -26,10 +33,18 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 def screen_log(message, trigger):
     if message.chat.type == 'private':
-        print(f'{message.chat.username} triggered {trigger}')
+        if message.chat.username:
+            print(f'{message.chat.username} triggered {trigger}')
+        else:
+            print(
+                f'{message.chat.first_name} {message.chat.last_name} triggered {trigger}')
     else:
-        print(
-            f'{message.from_user.username} triggered {trigger} in {message.chat.title}')
+        if message.from_user.username:
+            print(
+                f'{message.from_user.username} triggered {trigger} in {message.chat.title}')
+        else:
+            print(
+                f'{message.from_user.first_name} {message.from_user.last_name} triggered {trigger}')
 
 
 def start(update, context):
@@ -172,6 +187,7 @@ def daily_forecast(context: telegram.ext.CallbackContext):
     plt.xlabel('时间')
     plt.setp(ax1.get_xticklabels(), visible=False)
     plt.savefig(f'{today}.png')
+    plt.close()
 
     context.bot.send_photo(chat_id=GDOU_Group,
                            photo=open(f'{today}.png', 'rb'))
@@ -182,8 +198,11 @@ def daily_forecast(context: telegram.ext.CallbackContext):
 
 def welcome_new_member(update, context):
     for member in update.message.new_chat_members:
-        update.message.reply_text(
-            "欢迎 {username}".format(username=member.username))
+        if member.username:
+            update.message.reply_text(f'欢迎 {member.username}')
+        else:
+            update.message.reply_text(
+                f'欢迎 {member.first_name} {member.last_name}')
 
 
 def get_sticker_id(update, context):
