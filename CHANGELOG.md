@@ -1,5 +1,11 @@
 # Changelog
 
+## 2019/12/29 15:00
+
+Added:
+
+- 使用BigJpg API来放大图片
+
 ## 2019/12/5 20:18
 
 Added:

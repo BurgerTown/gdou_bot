@@ -3,4 +3,5 @@ __pycache__/
 test.py
 config.py
 *.png
+*.jpg
 burgertown.py

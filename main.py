@@ -1,4 +1,6 @@
 import os
+import time
+import json
 import logging
 import datetime
 import requests
@@ -12,12 +14,13 @@ from pylab import mpl
 from telegram.ext import Updater
 from telegram.ext import CommandHandler, MessageHandler
 from telegram.ext.filters import Filters
-from config import DEV_TOKEN, PUB_TOKEN, TEST_ID, HEWEATHER_KEY, MZQ_CODE
+from config import DEV_TOKEN, PUB_TOKEN, TEST_ID, HEWEATHER_KEY, MZQ_CODE, PUB_NODE, BIGJPG_KEY
 
 location_code = MZQ_CODE
 GDOU_Group = '@GDOU_Water'
+BIGJPG_LINK = 'https://bigjpg.com/api/task/'
 
-if platform.node() == 'localhost.localdomain':
+if platform.node() == PUB_NODE:
     ENV = 'PUB'
     updater = Updater(token=PUB_TOKEN, use_context=True)  # PUB
 else:
@@ -93,8 +96,24 @@ def make_sticker(update, context):
         with Image.open(file_name) as img:
             size = img.size
             if size[0] < 512:
+                headers = {'X-API-KEY': BIGJPG_KEY,
+                           'Content-Type': 'application/x-www-form-urlencoded'}
+                params = {'style': 'art', 'noise': '0', 'x2': '2', 'file_name': file_name, "files_size": os.path.getsize(
+                    file_name), "file_height": size[1], "file_width": size[0], 'input': f'https://bigjpg.burgertown.tk/{file_name}'}
+                response = requests.post(
+                    BIGJPG_LINK, data=f'conf={json.dumps(params)}', headers=headers).json()
+                tid = response['tid']
+                remaining = response['remaining_api_calls']
+                text = f'使用BigJpg API\n这个月API还剩下{remaining}次'
                 context.bot.send_message(
-                    chat_id=update.effective_chat.id, text='请保证宽 > 512px')
+                    chat_id=update.effective_chat.id, text=text)
+                time.sleep(3)
+                response = requests.get(f'{BIGJPG_LINK}{tid}').json()[tid]
+                while response['status'] != 'success':
+                    time.sleep(3)
+                    response = requests.get(f'{BIGJPG_LINK}{tid}').json()[tid]
+                with open(file_name, 'wb') as f:
+                    f.write(requests.get(response['url']).content)
             else:
                 img = img.resize((512, int(size[1]*512/size[0])))
                 output_name = ''
