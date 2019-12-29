@@ -95,6 +95,7 @@ def make_sticker(update, context):
         context.bot.get_file(file_id).download(file_name)
         with Image.open(file_name) as img:
             size = img.size
+            output_name = ''
             if size[0] < 512:
                 headers = {'X-API-KEY': BIGJPG_KEY,
                            'Content-Type': 'application/x-www-form-urlencoded'}
@@ -116,7 +117,6 @@ def make_sticker(update, context):
                     f.write(requests.get(response['url']).content)
             else:
                 img = img.resize((512, int(size[1]*512/size[0])))
-                output_name = ''
                 if file_name.split('.')[-1] == 'png':
                     img.save(file_name)
                 else:
