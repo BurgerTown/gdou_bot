@@ -62,14 +62,14 @@ def jw(update, context):
     context.bot.send_chat_action(
         chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
     screen_log(update.message, 'jw')
-    text = requests.get('http://www.gdou.edu.cn/jw/zf.html').text
-    text = text.split('<div class="div">')[1].split('</A>')[:-1]
+    request = requests.get('https://www.gdou.edu.cn/jxfw1/bks.htm')
+    text = str(request.content, encoding='utf-8-sig')
+    text = text.split('正方教务系统')[1].split('</ul>')[0].split('href="')[1:]
     links = []
     texts = []
     for t in text:
-        t = t.split(' target="_blank">')
-        texts.append(t[-1])
-        links.append(t[0].split('"')[1])
+        links.append(t.split('" ')[0])
+        texts.append(t.split('_blank">')[1].split('</a>')[0])
     text = ['广东海洋大学教务系统: ']
     for t in range(len(texts)):
         text.append(f'[{texts[t]}]({links[t]})')
@@ -79,7 +79,7 @@ def jw(update, context):
 
 def yjpj(update, context):
     screen_log(update.message, 'yjpj')
-    text = '计协一键评教 (Win) 下载: \nhttps://dwz.cn/KOGwwRL6'
+    text = '计协一键评估 (Win) 下载: \nhttps://dwz.cn/KOGwwRL6'
     context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
 
@@ -105,7 +105,7 @@ def make_sticker(update, context):
                     BIGJPG_LINK, data=f'conf={json.dumps(params)}', headers=headers).json()
                 tid = response['tid']
                 remaining = response['remaining_api_calls']
-                text = f'使用BigJpg API\n这个月API还剩下{remaining}次'
+                text = f'使用BigJpg API\n这个月API还剩下{remaining}'
                 context.bot.send_message(
                     chat_id=update.effective_chat.id, text=text)
                 time.sleep(3)
@@ -145,7 +145,7 @@ def weather_now(update, context):
     link = f'https://free-api.heweather.net/s6/weather/{weather_type}'
     payload = {'location': location_code, 'key': HEWEATHER_KEY}
     result = requests.get(link, params=payload).json()['HeWeather6'][0]['now']
-    text = '现在天气如下:\n体感温度: {fl}\n温度: {tmp}\n天气: {cond_txt} \n降水量: {pcpn}'.format(
+    text = '现在天气如下:\n体感温度: {fl}\n温度: {tmp}\n天气: {cond_txt} \n降水: {pcpn}'.format(
         **result)
     context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
