@@ -11,11 +11,11 @@ import matplotlib.pyplot as plt
 import matplotlib
 from PIL import Image
 from pylab import mpl
+from dateutil.tz import tzlocal
 from telegram.ext import Updater
 from telegram.ext import CommandHandler, MessageHandler
 from telegram.ext.filters import Filters
 from config import DEV_TOKEN, PUB_TOKEN, TEST_ID, HEWEATHER_KEY, MZQ_CODE, PUB_NODE, BIGJPG_KEY
-
 location_code = MZQ_CODE
 GDOU_Group = '@GDOU_Water'
 BIGJPG_LINK = 'https://bigjpg.com/api/task/'
@@ -99,10 +99,18 @@ def make_sticker(update, context):
             if size[0] < 512:
                 headers = {'X-API-KEY': BIGJPG_KEY,
                            'Content-Type': 'application/x-www-form-urlencoded'}
-                params = {'style': 'art', 'noise': '0', 'x2': '2', 'file_name': file_name, "files_size": os.path.getsize(
-                    file_name), "file_height": size[1], "file_width": size[0], 'input': f'https://bigjpg.burgertown.tk/{file_name}'}
-                response = requests.post(
-                    BIGJPG_LINK, data=f'conf={json.dumps(params)}', headers=headers).json()
+                data = {'style': 'art',
+                        'noise': '0',
+                        'x2': '2',
+                        'file_name': file_name,
+                        'files_size': os.path.getsize(file_name),
+                        'file_height': size[1],
+                        'file_width': size[0],
+                        'input': f'https://bigjpg.burgertown.tk/{file_name}'}
+                response = requests.post(url=BIGJPG_LINK, data={
+                                         'conf': json.dumps(data)}, headers=headers)
+                response = response.json()
+                print(response)
                 tid = response['tid']
                 remaining = response['remaining_api_calls']
                 text = f'使用BigJpg API\n这个月API还剩下{remaining}'
@@ -217,11 +225,17 @@ def daily_forecast(context: telegram.ext.CallbackContext):
 
 def welcome_new_member(update, context):
     for member in update.message.new_chat_members:
+        if update.effective_chat.username != 'GDOU_water':
+            return 0
         if member.username:
             update.message.reply_text(f'欢迎 {member.username}')
         else:
-            update.message.reply_text(
-                f'欢迎 {member.first_name} {member.last_name}')
+            username = member.username
+            if member.last_name:
+                update.message.reply_text(
+                    f'欢迎 {member.first_name} {member.last_name}')
+            else:
+                update.message.reply_text(f'欢迎 {member.first_name}')
 
 
 def get_sticker_id(update, context):
@@ -246,7 +260,8 @@ def test():
                                          sticker='CAADBQADBQAD6EXBEZeMDoztApb_FgQ')
 
 
-job.run_daily(daily_forecast, time=datetime.time(0, 0, 0))
+job.run_daily(daily_forecast, time=datetime.time(
+    0, 0, 0, tzinfo=tzlocal()))  # 先设置本机时间为北京时间
 dispatcher.add_handler(CommandHandler('start', start))
 dispatcher.add_handler(CommandHandler('jw', jw))
 dispatcher.add_handler(CommandHandler('yjpj', yjpj))
