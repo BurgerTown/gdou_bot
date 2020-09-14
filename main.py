@@ -59,22 +59,9 @@ def start(update, context):
 
 
 def jw(update, context):
-    context.bot.send_chat_action(
-        chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
     screen_log(update.message, 'jw')
-    request = requests.get('https://www.gdou.edu.cn/jxfw1/bks.htm')
-    text = str(request.content, encoding='utf-8-sig')
-    text = text.split('正方教务系统')[1].split('</ul>')[0].split('href="')[1:]
-    links = []
-    texts = []
-    for t in text:
-        links.append(t.split('" ')[0])
-        texts.append(t.split('_blank">')[1].split('</a>')[0])
-    text = ['广东海洋大学教务系统: ']
-    for t in range(len(texts)):
-        text.append(f'[{texts[t]}]({links[t]})')
-    context.bot.send_message(chat_id=update.effective_chat.id, text='\n'.join(
-        text), parse_mode=telegram.ParseMode.MARKDOWN)
+    text = '广东海洋大学教务系统: \nhttps://jw.gdou.edu.cn'
+    context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
 
 def yjpj(update, context):
