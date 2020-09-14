@@ -179,7 +179,7 @@ def daily_forecast(context: telegram.ext.CallbackContext):
     #                          text=text, parse_mode=telegram.ParseMode.MARKDOWN)
     context.bot.send_message(chat_id=GDOU_Group,
                              text=text, parse_mode=telegram.ParseMode.MARKDOWN)
-        weather_type = '24h'
+    weather_type = '24h'
     link = f'https://devapi.heweather.net/v7/weather/{weather_type}'
     result = requests.get(link, params=PAYLOAD).json()
     datas = result['hourly']
