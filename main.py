@@ -29,6 +29,7 @@ else:
 
 dispatcher = updater.dispatcher
 job = updater.job_queue
+PAYLOAD = {'location': location_code, 'key': HEWEATHER_KEY}
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -137,10 +138,10 @@ def weather_now(update, context):
         chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
     screen_log(update.message, 'weather_now')
     weather_type = 'now'
-    link = f'https://free-api.heweather.net/s6/weather/{weather_type}'
+    link = f'https://devapi.heweather.net/v7/weather/{weather_type}'
     payload = {'location': location_code, 'key': HEWEATHER_KEY}
-    result = requests.get(link, params=payload).json()['HeWeather6'][0]['now']
-    text = '现在天气如下:\n体感温度: {fl}\n温度: {tmp}\n天气: {cond_txt} \n降水: {pcpn}'.format(
+    result = requests.get(link, params=PAYLOAD).json()['now']
+    text = '现在天气如下\n体感温度 {feelsLike}度\n温度 {temp}度\n天气 {text} \n降水量 {precip}'.format(
         **result)
     context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
@@ -166,34 +167,32 @@ def daily_forecast(context: telegram.ext.CallbackContext):
     context.bot.send_chat_action(
         chat_id=GDOU_Group, action=telegram.ChatAction.TYPING)
     weather_type = 'forecast'
-    link = f'https://free-api.heweather.net/s6/weather/{weather_type}'
-    payload = {'location': location_code, 'key': HEWEATHER_KEY}
-    result = requests.get(link, params=payload).json()
-    days = result['HeWeather6'][0]['daily_forecast']
+    link = f'https://devapi.heweather.net/v7/weather/{weather_type}'
+    
+    result = requests.get(link, params=PAYLOAD).json()['daily']
     today = str(datetime.date.today())
-    for day in days:
-        if day['date'] == today:
-            t = day
-    text = '*{date}*\n天气预告如下\n今日温度 {tmp_min}-{tmp_max}\n降水概率 {pop}%\n白天天气 {cond_txt_d} \n晚间天气 {cond_txt_n}\n日出时间 {sr}\n日落时间 {ss}\n*Have A Nice Day*'.format(
-        **t)
+    for day in result:
+        if day['fxDate'] == today:
+            text = '*{fxDate}*\n天气预告如下\n今日温度 {tempMin}度-{tempMax}度\n预计降水量 {precip}mm\n白天天气 {textDay} \n晚间天气 {textNight}\n日出时间 {sunrise}\n日落时间 {sunset}\n*Have A Nice Day*'.format(
+            **day)
     # context.bot.send_message(chat_id=TEST_ID,
     #                          text=text, parse_mode=telegram.ParseMode.MARKDOWN)
     context.bot.send_message(chat_id=GDOU_Group,
                              text=text, parse_mode=telegram.ParseMode.MARKDOWN)
-    weather_type = 'hourly'
-    link = f'https://free-api.heweather.net/s6/weather/{weather_type}'
-    result = requests.get(link, params=payload).json()
-    datas = result['HeWeather6'][0]['hourly']
+        weather_type = '24h'
+    link = f'https://devapi.heweather.net/v7/weather/{weather_type}'
+    result = requests.get(link, params=PAYLOAD).json()
+    datas = result['hourly']
+    print(datas[1])
     tmps, pops, times = [], [], []
     for data in datas:
-        times.append(data['time'].split(' ')[1])
-        tmps.append(int(data['tmp']))
+        times.append(data['fxTime'].split('T')[1].split(':')[0])
+        tmps.append(int(data['temp']))
         pops.append(int(data['pop']))
 
     plt.rcParams['font.family'] = 'Sarasa Mono T SC'  # 用来正常显示中文标签
     plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
     plt.subplots_adjust(hspace=0.2)
-
     ax1 = plt.subplot(211)
     draw_subplot('tmp', times, tmps, today)
     plt.subplot(212)
