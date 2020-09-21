@@ -3,6 +3,7 @@ import time
 import json
 import logging
 import datetime
+from matplotlib import use
 import requests
 import telegram
 import platform
@@ -18,18 +19,24 @@ from telegram.ext.filters import Filters
 from config import DEV_TOKEN, PUB_TOKEN, TEST_ID, HEWEATHER_KEY, MZQ_CODE, PUB_NODE, BIGJPG_KEY
 location_code = MZQ_CODE
 GDOU_Group = '@GDOU_Water'
+GDOU_Group_ID = '-1001324513362'
 BIGJPG_LINK = 'https://bigjpg.com/api/task/'
 
 if platform.node() == PUB_NODE:
     ENV = 'PUB'
-    updater = Updater(token=PUB_TOKEN, use_context=True)  # PUB
+    token = PUB_TOKEN
 else:
     ENV = 'DEV'
-    updater = Updater(token=DEV_TOKEN, use_context=True)  # DEV
+    token = DEV_TOKEN
 
+updater = Updater(token=token, use_context=True)
 dispatcher = updater.dispatcher
 job = updater.job_queue
 PAYLOAD = {'location': location_code, 'key': HEWEATHER_KEY}
+ADMINISTRATORS = telegram.Bot(token).get_chat_administrators(GDOU_Group_ID)
+ADMIN_IDS = []
+for administrator in ADMINISTRATORS:
+    ADMIN_IDS.append(administrator.user.id)
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -176,9 +183,9 @@ def daily_forecast(context: telegram.ext.CallbackContext):
             text = '*{fxDate}*\n天气预告如下\n今日温度 {tempMin}度-{tempMax}度\n预计降水量 {precip}mm\n白天天气 {textDay} \n晚间天气 {textNight}\n日出时间 {sunrise}\n日落时间 {sunset}\n*Have A Nice Day*'.format(
                 **day)
     # context.bot.send_message(chat_id=TEST_ID,
-    #                          text=text, parse_mode=telegram.ParseMode.MARKDOWN)
+    #                          text=text, parse_mode=telegram.ParseMode.MARKDOWN_V2)
     context.bot.send_message(chat_id=GDOU_Group,
-                             text=text, parse_mode=telegram.ParseMode.MARKDOWN)
+                             text=text, parse_mode=telegram.ParseMode.MARKDOWN_V2)
     weather_type = '24h'
     link = f'https://devapi.heweather.net/v7/weather/{weather_type}'
     result = requests.get(link, params=PAYLOAD).json()
@@ -240,10 +247,38 @@ def tql(update, context):
         chat_id=update.effective_chat.id, sticker='CAADBQADBQAD6EXBEZeMDoztApb_FgQ')
 
 
-def test():
-    text = '111'
-    telegram.Bot(BOT_TOKEN).send_sticker(chat_id=TEST_ID,
-                                         sticker='CAADBQADBQAD6EXBEZeMDoztApb_FgQ')
+def tag_administrators(update, context):
+    # adminitrators = context.bot.get_chat_administrators(update.message.chat.id)
+    adminitrators = ADMINISTRATORS
+    text = []
+    for administrator in adminitrators:
+        user = administrator.user
+        if not user.is_bot:
+            if user.first_name:
+                text.append(
+                    f'[@{user.first_name}](tg://user?id={user.id})'.replace('_', '\_'))
+            else:
+                text.append(
+                    f'[@{user.first_name}](tg://user?id={user.id})'.replace('_', '\_'))
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text='\n'.join(text), parse_mode=telegram.ParseMode.MARKDOWN_V2)
+
+
+def kick_and_delete(update, context):
+    if update.message.reply_to_message:
+        if update.message.from_user.id in ADMIN_IDS:
+            context.bot.deleteMessage(
+                update.effective_chat.id, update.message.reply_to_message.message_id)
+            context.bot.deleteMessage(
+                update.effective_chat.id, update.message.message_id)
+            context.bot.kick_chat_member(
+                update.message.chat.id, update.message.reply_to_message.from_user.id)
+            if update.message.reply_to_message.from_user.first_name:
+                text = update.message.reply_to_message.from_user.first_name
+            else:
+                text = update.message.reply_to_message.from_user.username
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                                     text=f'**{text} HAS BEEN KICKED**', parse_mode=telegram.ParseMode.MARKDOWN_V2)
 
 
 job.run_daily(daily_forecast, time=datetime.time(
@@ -253,9 +288,11 @@ dispatcher.add_handler(CommandHandler('jw', jw))
 dispatcher.add_handler(CommandHandler('yjpj', yjpj))
 dispatcher.add_handler(CommandHandler('weather_now', weather_now))
 dispatcher.add_handler(CommandHandler('tql', tql))
+dispatcher.add_handler(CommandHandler('admins', tag_administrators))
+dispatcher.add_handler(CommandHandler('kd', kick_and_delete))
 dispatcher.add_handler(MessageHandler(Filters.document.image, make_sticker))
+dispatcher.add_handler(MessageHandler(Filters.sticker, get_sticker_id))
 # dispatcher.add_handler(MessageHandler(
 #     Filters.status_update.new_chat_members, welcome_new_member))
-dispatcher.add_handler(MessageHandler(Filters.sticker, get_sticker_id))
 # test()
 updater.start_polling()
