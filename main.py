@@ -168,13 +168,13 @@ def daily_forecast(context: telegram.ext.CallbackContext):
         chat_id=GDOU_Group, action=telegram.ChatAction.TYPING)
     weather_type = 'forecast'
     link = f'https://devapi.heweather.net/v7/weather/{weather_type}'
-    
+
     result = requests.get(link, params=PAYLOAD).json()['daily']
     today = str(datetime.date.today())
     for day in result:
         if day['fxDate'] == today:
             text = '*{fxDate}*\n天气预告如下\n今日温度 {tempMin}度-{tempMax}度\n预计降水量 {precip}mm\n白天天气 {textDay} \n晚间天气 {textNight}\n日出时间 {sunrise}\n日落时间 {sunset}\n*Have A Nice Day*'.format(
-            **day)
+                **day)
     # context.bot.send_message(chat_id=TEST_ID,
     #                          text=text, parse_mode=telegram.ParseMode.MARKDOWN)
     context.bot.send_message(chat_id=GDOU_Group,
@@ -254,8 +254,8 @@ dispatcher.add_handler(CommandHandler('yjpj', yjpj))
 dispatcher.add_handler(CommandHandler('weather_now', weather_now))
 dispatcher.add_handler(CommandHandler('tql', tql))
 dispatcher.add_handler(MessageHandler(Filters.document.image, make_sticker))
-dispatcher.add_handler(MessageHandler(
-    Filters.status_update.new_chat_members, welcome_new_member))
+# dispatcher.add_handler(MessageHandler(
+#     Filters.status_update.new_chat_members, welcome_new_member))
 dispatcher.add_handler(MessageHandler(Filters.sticker, get_sticker_id))
 # test()
 updater.start_polling()
