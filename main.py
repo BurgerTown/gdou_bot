@@ -79,7 +79,7 @@ def yjpj(update, context):
 
 
 def make_sticker(update, context):
-    if update.message.effective_chat.type != 'private':
+    if update.message.type != 'private':
         return None
     context.bot.send_chat_action(
         chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
@@ -234,7 +234,7 @@ def welcome_new_member(update, context):
 
 
 def get_sticker_id(update, context):
-    if update.message.effective_chat.type != 'private':
+    if update.message.type != 'private':
         return None
     context.bot.send_chat_action(
         chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
