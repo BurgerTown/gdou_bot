@@ -233,7 +233,7 @@ def welcome_new_member(update, context):
                 update.message.reply_text(f'欢迎 {member.first_name}')
 
 
-def get_sticker_id(update, context)
+def get_sticker_id(update, context):
    if update.message.effective_chat.type != 'private':
         return None
     context.bot.send_chat_action(
