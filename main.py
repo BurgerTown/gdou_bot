@@ -79,13 +79,14 @@ def yjpj(update, context):
 
 
 def make_sticker(update, context):
-    if update.message.effective_chat.type != 'private':
-        return null
-    context.bot.send_chat_action(
-        chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
-    if str(update.message.chat_id) != TEST_ID:
-        context.bot.send_message(
-            chat_id=update.effective_chat.id, text='权限不足')
+    if update.message.chat.type != 'private':
+        pass
+    else:
+        context.bot.send_chat_action(
+            chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
+        if str(update.message.chat_id) != TEST_ID:
+            context.bot.send_message(
+                chat_id=update.effective_chat.id, text='权限不足')
     else:
         file_id = update.message.document.file_id
         file_name = update.message.document.file_name
@@ -234,16 +235,17 @@ def welcome_new_member(update, context):
 
 
 def get_sticker_id(update, context):
-    if update.message.effective_chat.type != 'private':
-        return null
-    context.bot.send_chat_action(
-        chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
-    if str(update.message.chat_id) != TEST_ID:
-        context.bot.send_message(
-            chat_id=update.effective_chat.id, text='权限不足')
+    if update.message.chat.type != 'private':
+        pass
     else:
-        context.bot.send_message(
-            chat_id=update.effective_chat.id, text=update.message.sticker.file_id)
+        context.bot.send_chat_action(
+            chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
+        if str(update.message.chat_id) != TEST_ID:
+            context.bot.send_message(
+                chat_id=update.effective_chat.id, text='权限不足')
+        else:
+            context.bot.send_message(
+                chat_id=update.effective_chat.id, text=update.message.sticker.file_id)
 
 
 def tql(update, context):
