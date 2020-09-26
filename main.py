@@ -79,6 +79,8 @@ def yjpj(update, context):
 
 
 def make_sticker(update, context):
+    if update.message.effective_chat.type != 'private':
+        return null
     context.bot.send_chat_action(
         chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
     if str(update.message.chat_id) != TEST_ID:
@@ -232,6 +234,8 @@ def welcome_new_member(update, context):
 
 
 def get_sticker_id(update, context):
+    if update.message.effective_chat.type != 'private':
+        return null
     context.bot.send_chat_action(
         chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
     if str(update.message.chat_id) != TEST_ID:
@@ -279,6 +283,10 @@ def kick_and_delete(update, context):
                 text = update.message.reply_to_message.from_user.username
             context.bot.send_message(chat_id=update.effective_chat.id,
                                      text=f'**{text} HAS BEEN KICKED**', parse_mode=telegram.ParseMode.MARKDOWN_V2)
+
+
+def test():
+    telegram.Bot(token).send_message(GDOU_Group, text='hello')
 
 
 job.run_daily(daily_forecast, time=datetime.time(
