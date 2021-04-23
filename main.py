@@ -281,8 +281,7 @@ def test():
     telegram.Bot(token).send_message(GDOU_Group, text='hello')
 
 
-job.run_daily(daily_forecast, time=datetime.time(
-    0, 0, 0, tzinfo=tzlocal()))  # 先设置本机时间为北京时间
+job.run_daily(daily_forecast, time=datetime.time(0, 0, 0))  # 先设置本机时间为北京时间
 dispatcher.add_handler(CommandHandler('start', start))
 dispatcher.add_handler(CommandHandler('jw', jw))
 dispatcher.add_handler(CommandHandler('yjpj', yjpj))
