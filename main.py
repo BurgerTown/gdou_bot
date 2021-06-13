@@ -271,10 +271,10 @@ def tag_administrators(update, context):
 def kick_and_delete(update, context):
     if update.message.reply_to_message:
         if update.message.from_user.id in ADMIN_IDS:
+            context.bot.kick_chat_member(
+                update.effective_chat.id, update.message.reply_to_message.from_user.id, revoke_messages=True)
             context.bot.deleteMessage(
                 update.effective_chat.id, update.message.message_id)
-            context.bot.kick_chat_member(
-                update.message.chat.id, update.message.reply_to_message.from_user.id, revoke_messages=True)
 
 
 def test():
