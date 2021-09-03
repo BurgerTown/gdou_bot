@@ -17,6 +17,7 @@ from telegram.ext import Updater
 from telegram.ext import CommandHandler, MessageHandler
 from telegram.ext.filters import Filters
 from config import DEV_TOKEN, PUB_TOKEN, TEST_ID, HEWEATHER_KEY, MZQ_CODE, PUB_NODE, BIGJPG_KEY
+
 location_code = MZQ_CODE
 GDOU_Group = '@GDOU_Water'
 GDOU_Group_ID = '-1001324513362'
@@ -38,8 +39,7 @@ ADMIN_IDS = []
 for administrator in ADMINISTRATORS:
     ADMIN_IDS.append(administrator.user.id)
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 
 def screen_log(message, trigger):
@@ -47,15 +47,12 @@ def screen_log(message, trigger):
         if message.chat.username:
             print(f'{message.chat.username} triggered {trigger}')
         else:
-            print(
-                f'{message.chat.first_name} {message.chat.last_name} triggered {trigger}')
+            print(f'{message.chat.first_name} {message.chat.last_name} triggered {trigger}')
     else:
         if message.from_user.username:
-            print(
-                f'{message.from_user.username} triggered {trigger} in {message.chat.title}')
+            print(f'{message.from_user.username} triggered {trigger} in {message.chat.title}')
         else:
-            print(
-                f'{message.from_user.first_name} {message.from_user.last_name} triggered {trigger}')
+            print(f'{message.from_user.first_name} {message.from_user.last_name} triggered {trigger}')
 
 
 def start(update, context):
@@ -81,11 +78,9 @@ def yjpj(update, context):
 def make_sticker(update, context):
     if update.message.chat.type != 'private':
         return None
-    context.bot.send_chat_action(
-        chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
+    context.bot.send_chat_action(chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
     if str(update.message.chat_id) != TEST_ID:
-        context.bot.send_message(
-            chat_id=update.effective_chat.id, text='权限不足')
+        context.bot.send_message(chat_id=update.effective_chat.id, text='权限不足')
     else:
         file_id = update.message.document.file_id
         file_name = update.message.document.file_name
@@ -94,25 +89,24 @@ def make_sticker(update, context):
             size = img.size
             output_name = ''
             if size[0] < 512:
-                headers = {'X-API-KEY': BIGJPG_KEY,
-                           'Content-Type': 'application/x-www-form-urlencoded'}
-                data = {'style': 'art',
-                        'noise': '0',
-                        'x2': '2',
-                        'file_name': file_name,
-                        'files_size': os.path.getsize(file_name),
-                        'file_height': size[1],
-                        'file_width': size[0],
-                        'input': f'https://bigjpg.burgertown.tk/{file_name}'}
-                response = requests.post(url=BIGJPG_LINK, data={
-                                         'conf': json.dumps(data)}, headers=headers)
+                headers = {'X-API-KEY': BIGJPG_KEY, 'Content-Type': 'application/x-www-form-urlencoded'}
+                data = {
+                    'style': 'art',
+                    'noise': '0',
+                    'x2': '2',
+                    'file_name': file_name,
+                    'files_size': os.path.getsize(file_name),
+                    'file_height': size[1],
+                    'file_width': size[0],
+                    'input': f'https://bigjpg.burgertown.tk/{file_name}',
+                }
+                response = requests.post(url=BIGJPG_LINK, data={'conf': json.dumps(data)}, headers=headers)
                 response = response.json()
                 print(response)
                 tid = response['tid']
                 remaining = response['remaining_api_calls']
                 text = f'使用BigJpg API\n这个月API还剩下{remaining}'
-                context.bot.send_message(
-                    chat_id=update.effective_chat.id, text=text)
+                context.bot.send_message(chat_id=update.effective_chat.id, text=text)
                 time.sleep(3)
                 response = requests.get(f'{BIGJPG_LINK}{tid}').json()[tid]
                 while response['status'] != 'success':
@@ -121,7 +115,7 @@ def make_sticker(update, context):
                 with open(file_name, 'wb') as f:
                     f.write(requests.get(response['url']).content)
             else:
-                img = img.resize((512, int(size[1]*512/size[0])))
+                img = img.resize((512, int(size[1] * 512 / size[0])))
                 if file_name.split('.')[-1] == 'png':
                     img.save(file_name)
                 else:
@@ -133,31 +127,27 @@ def make_sticker(update, context):
 
         print(f'{file_name} converted')
         if output_name:
-            context.bot.send_document(
-                chat_id=update.effective_chat.id, document=open(output_name, 'rb'))
+            context.bot.send_document(chat_id=update.effective_chat.id, document=open(output_name, 'rb'))
             os.remove(output_name)
         else:
-            context.bot.send_document(
-                chat_id=update.effective_chat.id, document=open(file_name, 'rb'))
+            context.bot.send_document(chat_id=update.effective_chat.id, document=open(file_name, 'rb'))
         os.remove(file_name)
 
 
 def weather_now(update, context):
-    context.bot.send_chat_action(
-        chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
+    context.bot.send_chat_action(chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
     screen_log(update.message, 'weather_now')
     weather_type = 'now'
     link = f'https://devapi.heweather.net/v7/weather/{weather_type}'
     payload = {'location': location_code, 'key': HEWEATHER_KEY}
     result = requests.get(link, params=PAYLOAD).json()['now']
-    text = '现在天气如下\n体感温度 {feelsLike}度\n温度 {temp}度\n天气 {text} \n降水量 {precip}'.format(
-        **result)
+    text = '现在天气如下\n体感温度 {feelsLike}度\n温度 {temp}度\n天气 {text} \n降水量 {precip}'.format(**result)
     context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
 
 def draw_subplot(type, times, data, today):
     plt.plot(times, data)
-    plt.ylim(min(data)-2, max(data)+2)
+    plt.ylim(min(data) - 2, max(data) + 2)
     if type == 'tmp':
         plt.ylabel('温度 °C')
         plt.title(f'{today} 温度预报')
@@ -167,14 +157,12 @@ def draw_subplot(type, times, data, today):
 
     max_indx = np.argmax(data)
     plt.plot(max_indx, data[max_indx], 'ks')
-    show_max = '['+str(times[max_indx])+' '+str(data[max_indx])+']'
-    plt.annotate(show_max, xytext=(
-        max_indx, data[max_indx]), xy=(max_indx, data[max_indx]))
+    show_max = '[' + str(times[max_indx]) + ' ' + str(data[max_indx]) + ']'
+    plt.annotate(show_max, xytext=(max_indx, data[max_indx]), xy=(max_indx, data[max_indx]))
 
 
 def daily_forecast(context: telegram.ext.CallbackContext):
-    context.bot.send_chat_action(
-        chat_id=GDOU_Group, action=telegram.ChatAction.TYPING)
+    context.bot.send_chat_action(chat_id=GDOU_Group, action=telegram.ChatAction.TYPING)
     weather_type = 'forecast'
     link = f'https://devapi.heweather.net/v7/weather/{weather_type}'
 
@@ -183,11 +171,11 @@ def daily_forecast(context: telegram.ext.CallbackContext):
     for day in result:
         if day['fxDate'] == today:
             text = '*{fxDate}*\n天气预告如下\n今日温度 {tempMin}度-{tempMax}度\n预计降水量 {precip}mm\n白天天气 {textDay} \n晚间天气 {textNight}\n日出时间 {sunrise}\n日落时间 {sunset}\n*Have A Nice Day*'.format(
-                **day)
+                **day
+            )
     # context.bot.send_message(chat_id=TEST_ID,
     #                          text=text, parse_mode=telegram.ParseMode.MARKDOWN_V2)
-    context.bot.send_message(chat_id=GDOU_Group,
-                             text=text, parse_mode=telegram.ParseMode.MARKDOWN_V2)
+    context.bot.send_message(chat_id=GDOU_Group, text=text, parse_mode=telegram.ParseMode.MARKDOWN_V2)
     weather_type = '24h'
     link = f'https://devapi.heweather.net/v7/weather/{weather_type}'
     result = requests.get(link, params=PAYLOAD).json()
@@ -211,8 +199,7 @@ def daily_forecast(context: telegram.ext.CallbackContext):
     plt.savefig(f'{today}.png')
     plt.close()
 
-    context.bot.send_photo(chat_id=GDOU_Group,
-                           photo=open(f'{today}.png', 'rb'))
+    context.bot.send_photo(chat_id=GDOU_Group, photo=open(f'{today}.png', 'rb'))
     # context.bot.send_photo(chat_id=TEST_ID,
     #                        photo=open(f'{today}.png', 'rb'))
     print(f'{datetime.date.today()} forecast pushed')
@@ -227,8 +214,7 @@ def welcome_new_member(update, context):
         else:
             username = member.username
             if member.last_name:
-                update.message.reply_text(
-                    f'欢迎 {member.first_name} {member.last_name}')
+                update.message.reply_text(f'欢迎 {member.first_name} {member.last_name}')
             else:
                 update.message.reply_text(f'欢迎 {member.first_name}')
 
@@ -236,19 +222,15 @@ def welcome_new_member(update, context):
 def get_sticker_id(update, context):
     if update.message.chat.type != 'private':
         return None
-    context.bot.send_chat_action(
-        chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
+    context.bot.send_chat_action(chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
     if str(update.message.chat_id) != TEST_ID:
-        context.bot.send_message(
-            chat_id=update.effective_chat.id, text='权限不足')
+        context.bot.send_message(chat_id=update.effective_chat.id, text='权限不足')
     else:
-        context.bot.send_message(
-            chat_id=update.effective_chat.id, text=update.message.sticker.file_id)
+        context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.sticker.file_id)
 
 
 def tql(update, context):
-    context.bot.send_sticker(
-        chat_id=update.effective_chat.id, sticker='CAADBQADBQAD6EXBEZeMDoztApb_FgQ')
+    context.bot.send_sticker(chat_id=update.effective_chat.id, sticker='CAADBQADBQAD6EXBEZeMDoztApb_FgQ')
 
 
 def tag_administrators(update, context):
@@ -259,22 +241,18 @@ def tag_administrators(update, context):
         user = administrator.user
         if not user.is_bot:
             if user.first_name:
-                text.append(
-                    f'[@{user.first_name}](tg://user?id={user.id})'.replace('_', '\_'))
+                text.append(f'[@{user.first_name}](tg://user?id={user.id})'.replace('_', '\_'))
             else:
-                text.append(
-                    f'[@{user.first_name}](tg://user?id={user.id})'.replace('_', '\_'))
-    context.bot.send_message(chat_id=update.effective_chat.id,
-                             text='\n'.join(text), parse_mode=telegram.ParseMode.MARKDOWN_V2)
+                text.append(f'[@{user.first_name}](tg://user?id={user.id})'.replace('_', '\_'))
+    context.bot.send_message(chat_id=update.effective_chat.id, text='\n'.join(text), parse_mode=telegram.ParseMode.MARKDOWN_V2)
 
 
 def kick_and_delete(update, context):
     if update.message.reply_to_message:
         if update.message.from_user.id in ADMIN_IDS:
-            context.bot.kick_chat_member(
-                update.effective_chat.id, update.message.reply_to_message.from_user.id, revoke_messages=True)
-            context.bot.deleteMessage(
-                update.effective_chat.id, update.message.message_id)
+            print(f'trigger by {update.message.from_user.id}')
+            context.bot.kick_chat_member(update.effective_chat.id, update.message.reply_to_message.from_user.id, revoke_messages=True)
+            context.bot.deleteMessage(update.effective_chat.id, update.message.message_id)
 
 
 def test():
