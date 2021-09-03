@@ -1,22 +1,22 @@
-import os
-import time
+import datetime
 import json
 import logging
-import datetime
-from matplotlib import use
+import os
+import platform
+import time
+
+import matplotlib.pyplot as plt
+import numpy as np
 import requests
 import telegram
-import platform
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib
+from dateutil.tz import tzlocal
+from matplotlib import use
 from PIL import Image
 from pylab import mpl
-from dateutil.tz import tzlocal
-from telegram.ext import Updater
-from telegram.ext import CommandHandler, MessageHandler
+from telegram.ext import CommandHandler, MessageHandler, Updater
 from telegram.ext.filters import Filters
-from config import DEV_TOKEN, PUB_TOKEN, TEST_ID, HEWEATHER_KEY, MZQ_CODE, PUB_NODE, BIGJPG_KEY
+
+from config import BIGJPG_KEY, DEV_TOKEN, HEWEATHER_KEY, MZQ_CODE, PUB_NODE, PUB_TOKEN, TEST_ID
 
 location_code = MZQ_CODE
 GDOU_Group = '@GDOU_Water'
@@ -139,7 +139,6 @@ def weather_now(update, context):
     screen_log(update.message, 'weather_now')
     weather_type = 'now'
     link = f'https://devapi.heweather.net/v7/weather/{weather_type}'
-    payload = {'location': location_code, 'key': HEWEATHER_KEY}
     result = requests.get(link, params=PAYLOAD).json()['now']
     text = '现在天气如下\n体感温度 {feelsLike}度\n温度 {temp}度\n天气 {text} \n降水量 {precip}'.format(**result)
     context.bot.send_message(chat_id=update.effective_chat.id, text=text)
@@ -250,9 +249,12 @@ def tag_administrators(update, context):
 def kick_and_delete(update, context):
     if update.message.reply_to_message:
         if update.message.from_user.id in ADMIN_IDS:
-            print(f'trigger by {update.message.from_user.id}')
-            context.bot.kick_chat_member(update.effective_chat.id, update.message.reply_to_message.from_user.id, revoke_messages=True)
+            context.bot.ban_chat_member(update.effective_chat.id, update.message.reply_to_message.from_user.id, revoke_messages=True)
             context.bot.deleteMessage(update.effective_chat.id, update.message.message_id)
+
+
+def clean_messages(update, context):
+    context.bot.deleteMessage(update.effective_chat.id, update.message.message_id)
 
 
 def test():
@@ -269,6 +271,7 @@ dispatcher.add_handler(CommandHandler('admins', tag_administrators))
 dispatcher.add_handler(CommandHandler('kd', kick_and_delete))
 dispatcher.add_handler(MessageHandler(Filters.document.image, make_sticker))
 dispatcher.add_handler(MessageHandler(Filters.sticker, get_sticker_id))
+dispatcher.add_handler(MessageHandler(Filters.status_update.new_chat_member & Filters.status_update.left_chat_member, clean_messages))
 # dispatcher.add_handler(MessageHandler(
 #     Filters.status_update.new_chat_members, welcome_new_member))
 # test()
